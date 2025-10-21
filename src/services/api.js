@@ -1,277 +1,307 @@
 import axios from 'axios';
 
-// Configure your API endpoint here
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.example.com';
+// Get API credentials from environment variables
+const API_KEY = import.meta.env.VITE_FMP_API_KEY;
+const API_BASE_URL = import.meta.env.VITE_FMP_API_BASE_URL || 'https://financialmodelingprep.com/api/v3';
+
+// Validate API key is present
+if (!API_KEY) {
+  console.error('API key is missing. Please set VITE_FMP_API_KEY in your .env file');
+}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  timeout: 30000,
 });
 
 /**
- * Fetch all available earnings call transcripts
- * @returns {Promise<Array>} List of transcripts
+ * Popular stock symbols for user selection
  */
-export const getTranscripts = async (params = {}) => {
-  try {
-    const response = await api.get('/transcripts', { params });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching transcripts:', error);
-    throw error;
-  }
-};
+export const POPULAR_SYMBOLS = [
+  { value: 'AAPL', label: 'Apple Inc. (AAPL)' },
+  { value: 'MSFT', label: 'Microsoft Corporation (MSFT)' },
+  { value: 'GOOGL', label: 'Alphabet Inc. (GOOGL)' },
+  { value: 'AMZN', label: 'Amazon.com Inc. (AMZN)' },
+  { value: 'TSLA', label: 'Tesla Inc. (TSLA)' },
+  { value: 'META', label: 'Meta Platforms Inc. (META)' },
+  { value: 'NVDA', label: 'NVIDIA Corporation (NVDA)' },
+  { value: 'JPM', label: 'JPMorgan Chase & Co. (JPM)' },
+  { value: 'V', label: 'Visa Inc. (V)' },
+  { value: 'WMT', label: 'Walmart Inc. (WMT)' },
+  { value: 'DIS', label: 'The Walt Disney Company (DIS)' },
+  { value: 'NFLX', label: 'Netflix Inc. (NFLX)' },
+  { value: 'BA', label: 'The Boeing Company (BA)' },
+  { value: 'INTC', label: 'Intel Corporation (INTC)' },
+  { value: 'AMD', label: 'Advanced Micro Devices Inc. (AMD)' },
+];
 
 /**
- * Fetch a specific transcript by ID
- * @param {string} id - Transcript ID
- * @returns {Promise<Object>} Transcript details with summary
+ * Fetch earnings call transcript for a specific symbol
+ * @param {string} symbol - Stock ticker symbol
+ * @returns {Promise<Array>} Array of transcripts
  */
-export const getTranscriptById = async (id) => {
+export const getEarningsCallTranscript = async (symbol) => {
   try {
-    const response = await api.get(`/transcripts/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching transcript ${id}:`, error);
-    throw error;
-  }
-};
-
-/**
- * Search transcripts by company name or ticker
- * @param {string} query - Search query
- * @returns {Promise<Array>} Filtered list of transcripts
- */
-export const searchTranscripts = async (query) => {
-  try {
-    const response = await api.get('/transcripts/search', {
-      params: { q: query },
+    const response = await api.get(`/earning_call_transcript/${symbol}`, {
+      params: { apikey: API_KEY },
     });
     return response.data;
   } catch (error) {
-    console.error('Error searching transcripts:', error);
+    console.error(`Error fetching transcript for ${symbol}:`, error);
+    if (error.response?.status === 401) {
+      throw new Error('Invalid API key. Please check your VITE_FMP_API_KEY');
+    }
     throw error;
   }
 };
 
 /**
- * Get transcript summary
- * @param {string} id - Transcript ID
- * @returns {Promise<Object>} Transcript summary
+ * Fetch transcripts for multiple symbols
+ * @param {Array<string>} symbols - Array of stock ticker symbols
+ * @returns {Promise<Array>} Array of transcript data with symbol info
  */
-export const getTranscriptSummary = async (id) => {
+export const getMultipleTranscripts = async (symbols) => {
   try {
-    const response = await api.get(`/transcripts/${id}/summary`);
-    return response.data;
+    const promises = symbols.map(async (symbol) => {
+      try {
+        const transcripts = await getEarningsCallTranscript(symbol);
+        // Get the most recent transcript
+        if (transcripts && transcripts.length > 0) {
+          return {
+            symbol,
+            ...transcripts[0],
+          };
+        }
+        return null;
+      } catch (error) {
+        console.error(`Failed to fetch ${symbol}:`, error);
+        return null;
+      }
+    });
+
+    const results = await Promise.all(promises);
+    return results.filter((result) => result !== null);
   } catch (error) {
-    console.error(`Error fetching summary for transcript ${id}:`, error);
+    console.error('Error fetching multiple transcripts:', error);
     throw error;
   }
 };
 
-// Mock data for development/demo purposes
-export const getMockTranscripts = () => {
-  return Promise.resolve([
-    {
-      id: '1',
-      company: 'Apple Inc.',
-      ticker: 'AAPL',
-      quarter: 'Q4 2024',
-      date: '2024-10-31',
-      title: 'Apple Q4 2024 Earnings Call',
-    },
-    {
-      id: '2',
-      company: 'Microsoft Corporation',
-      ticker: 'MSFT',
-      quarter: 'Q4 2024',
-      date: '2024-10-30',
-      title: 'Microsoft Q4 2024 Earnings Call',
-    },
-    {
-      id: '3',
-      company: 'Alphabet Inc.',
-      ticker: 'GOOGL',
-      quarter: 'Q3 2024',
-      date: '2024-10-29',
-      title: 'Alphabet Q3 2024 Earnings Call',
-    },
-    {
-      id: '4',
-      company: 'Amazon.com Inc.',
-      ticker: 'AMZN',
-      quarter: 'Q3 2024',
-      date: '2024-10-26',
-      title: 'Amazon Q3 2024 Earnings Call',
-    },
-    {
-      id: '5',
-      company: 'Tesla Inc.',
-      ticker: 'TSLA',
-      quarter: 'Q3 2024',
-      date: '2024-10-23',
-      title: 'Tesla Q3 2024 Earnings Call',
-    },
-  ]);
-};
+/**
+ * Analyze transcript content using AI-like keyword extraction
+ * @param {string} content - Transcript content
+ * @returns {Object} Analysis results
+ */
+export const analyzeTranscript = (transcript) => {
+  if (!transcript || !transcript.content) {
+    return null;
+  }
 
-export const getMockTranscriptSummary = (id) => {
-  const summaries = {
-    '1': {
-      id: '1',
-      company: 'Apple Inc.',
-      ticker: 'AAPL',
-      quarter: 'Q4 2024',
-      date: '2024-10-31',
-      title: 'Apple Q4 2024 Earnings Call',
-      summary: {
-        keyHighlights: [
-          'Revenue reached $94.9 billion, up 6% year-over-year',
-          'iPhone revenue grew 8% to $46.2 billion',
-          'Services revenue set an all-time record at $25.0 billion',
-          'Strong performance in emerging markets, particularly India',
-          'Announced new AI features coming to iOS 18.2',
-        ],
-        financialMetrics: {
-          revenue: '$94.9B',
-          netIncome: '$22.9B',
-          eps: '$1.46',
-          grossMargin: '46.2%',
-        },
-        sentiment: 'Positive',
-        managementOutlook: 'Management expressed confidence in continued growth driven by strong product lineup and expanding services ecosystem. Emphasized investments in AI and machine learning capabilities.',
-        questionsHighlights: [
-          'Discussed supply chain improvements and production efficiency',
-          'Addressed competitive landscape in smartphone market',
-          'Provided insights on Vision Pro adoption and future roadmap',
-        ],
-      },
-    },
-    '2': {
-      id: '2',
-      company: 'Microsoft Corporation',
-      ticker: 'MSFT',
-      quarter: 'Q4 2024',
-      date: '2024-10-30',
-      title: 'Microsoft Q4 2024 Earnings Call',
-      summary: {
-        keyHighlights: [
-          'Revenue increased 13% to $65.6 billion',
-          'Cloud revenue grew 20% year-over-year',
-          'Azure growth accelerated to 29%',
-          'AI services contributing significantly to cloud growth',
-          'GitHub Copilot reaching 1 million paid subscribers',
-        ],
-        financialMetrics: {
-          revenue: '$65.6B',
-          netIncome: '$24.7B',
-          eps: '$3.30',
-          grossMargin: '69.0%',
-        },
-        sentiment: 'Very Positive',
-        managementOutlook: 'Strong optimism around AI integration across product portfolio. Expect continued momentum in cloud services and enterprise adoption of AI tools.',
-        questionsHighlights: [
-          'AI monetization strategies and ROI for customers',
-          'Competition in cloud infrastructure market',
-          'Gaming division performance and Activision integration',
-        ],
-      },
-    },
-    '3': {
-      id: '3',
-      company: 'Alphabet Inc.',
-      ticker: 'GOOGL',
-      quarter: 'Q3 2024',
-      date: '2024-10-29',
-      title: 'Alphabet Q3 2024 Earnings Call',
-      summary: {
-        keyHighlights: [
-          'Total revenue grew 11% to $88.3 billion',
-          'Search advertising revenue increased 10%',
-          'YouTube advertising revenue up 13%',
-          'Google Cloud revenue grew 35% to $11.4 billion',
-          'Significant progress in AI model development',
-        ],
-        financialMetrics: {
-          revenue: '$88.3B',
-          netIncome: '$26.3B',
-          eps: '$2.12',
-          grossMargin: '57.0%',
-        },
-        sentiment: 'Positive',
-        managementOutlook: 'Optimistic about AI-driven search improvements and cloud growth. Focused on responsible AI development and integration across products.',
-        questionsHighlights: [
-          'Impact of AI on search experience and monetization',
-          'Cloud competitive positioning',
-          'Regulatory challenges and responses',
-        ],
-      },
-    },
-    '4': {
-      id: '4',
-      company: 'Amazon.com Inc.',
-      ticker: 'AMZN',
-      quarter: 'Q3 2024',
-      date: '2024-10-26',
-      title: 'Amazon Q3 2024 Earnings Call',
-      summary: {
-        keyHighlights: [
-          'Net sales increased 11% to $158.9 billion',
-          'AWS revenue grew 19% to $27.5 billion',
-          'Operating income improved to $17.4 billion',
-          'Prime membership continues strong growth',
-          'Significant investments in AI and logistics automation',
-        ],
-        financialMetrics: {
-          revenue: '$158.9B',
-          netIncome: '$15.3B',
-          eps: '$1.43',
-          operatingMargin: '11.0%',
-        },
-        sentiment: 'Positive',
-        managementOutlook: 'Expect strong holiday season performance. Continued focus on cost optimization and improving delivery speeds. AWS showing accelerating growth.',
-        questionsHighlights: [
-          'Holiday season outlook and inventory management',
-          'AWS growth drivers and AI workload adoption',
-          'International expansion plans',
-        ],
-      },
-    },
-    '5': {
-      id: '5',
-      company: 'Tesla Inc.',
-      ticker: 'TSLA',
-      quarter: 'Q3 2024',
-      date: '2024-10-23',
-      title: 'Tesla Q3 2024 Earnings Call',
-      summary: {
-        keyHighlights: [
-          'Record quarterly revenue of $25.2 billion',
-          'Delivered 462,890 vehicles in Q3',
-          'Energy storage deployments increased 73% year-over-year',
-          'Cybertruck production ramping up',
-          'Full Self-Driving improvements with version 12',
-        ],
-        financialMetrics: {
-          revenue: '$25.2B',
-          netIncome: '$2.2B',
-          eps: '$0.72',
-          grossMargin: '19.8%',
-        },
-        sentiment: 'Neutral to Positive',
-        managementOutlook: 'Focused on scaling production and reducing costs. Emphasized robotaxi development and AI capabilities. Energy business showing strong momentum.',
-        questionsHighlights: [
-          'Timeline for next-generation vehicle platform',
-          'FSD progress and regulatory approval path',
-          'Competition in EV market and pricing strategy',
-        ],
-      },
+  const content = transcript.content.toLowerCase();
+
+  // Extract key metrics and themes
+  const analysis = {
+    id: `${transcript.symbol}-${transcript.quarter}-${transcript.year}`,
+    company: getCompanyName(transcript.symbol),
+    ticker: transcript.symbol,
+    quarter: `${transcript.quarter} ${transcript.year}`,
+    date: transcript.date,
+    title: `${getCompanyName(transcript.symbol)} ${transcript.quarter} ${transcript.year} Earnings Call`,
+    summary: {
+      keyHighlights: extractKeyHighlights(content, transcript),
+      financialMetrics: extractFinancialMetrics(content),
+      sentiment: analyzeSentiment(content),
+      managementOutlook: extractManagementOutlook(content),
+      questionsHighlights: extractQAHighlights(content),
     },
   };
 
-  return Promise.resolve(summaries[id] || summaries['1']);
+  return analysis;
+};
+
+/**
+ * Get company name from symbol
+ */
+const getCompanyName = (symbol) => {
+  const company = POPULAR_SYMBOLS.find((s) => s.value === symbol);
+  return company ? company.label.split('(')[0].trim() : symbol;
+};
+
+/**
+ * Extract key highlights from transcript
+ */
+const extractKeyHighlights = (content, transcript) => {
+  const highlights = [];
+
+  // Look for revenue mentions
+  const revenueMatch = content.match(/revenue[s]?\s+(?:of\s+|was\s+|reached\s+)?[\$]?(\d+\.?\d*)\s*(billion|million)/i);
+  if (revenueMatch) {
+    highlights.push(`Revenue ${revenueMatch[0].includes('grew') || content.includes('increase') ? 'grew to' : 'reached'} ${revenueMatch[0].match(/[\$]?\d+\.?\d*\s*(?:billion|million)/i)[0]}`);
+  }
+
+  // Look for growth mentions
+  if (content.includes('growth') || content.includes('increase')) {
+    const growthMatch = content.match(/(\d+)%\s+(?:growth|increase|up)/i);
+    if (growthMatch) {
+      highlights.push(`Strong growth of ${growthMatch[1]}% reported`);
+    }
+  }
+
+  // Look for product/service mentions
+  if (content.includes('new product') || content.includes('launch')) {
+    highlights.push('Announced new product launches and initiatives');
+  }
+
+  // Look for market expansion
+  if (content.includes('expand') || content.includes('market')) {
+    highlights.push('Discussed market expansion strategies');
+  }
+
+  // Look for AI/innovation mentions
+  if (content.includes('artificial intelligence') || content.includes('ai') || content.includes('innovation')) {
+    highlights.push('Emphasized investments in AI and innovation');
+  }
+
+  // Default highlights if none found
+  if (highlights.length === 0) {
+    highlights.push(`Quarterly earnings call for ${transcript.quarter} ${transcript.year}`);
+    highlights.push('Detailed financial performance and strategic initiatives discussed');
+    highlights.push('Management provided outlook for upcoming quarters');
+  }
+
+  return highlights.slice(0, 5);
+};
+
+/**
+ * Extract financial metrics from transcript
+ */
+const extractFinancialMetrics = (content) => {
+  const metrics = {
+    revenue: 'N/A',
+    netIncome: 'N/A',
+    eps: 'N/A',
+    grossMargin: 'N/A',
+  };
+
+  // Extract revenue
+  const revenueMatch = content.match(/revenue[s]?\s+(?:of\s+|was\s+|reached\s+)?[\$]?(\d+\.?\d*)\s*(billion|million)/i);
+  if (revenueMatch) {
+    metrics.revenue = `$${revenueMatch[1]}${revenueMatch[2][0].toUpperCase()}`;
+  }
+
+  // Extract net income
+  const incomeMatch = content.match(/net\s+income[s]?\s+(?:of\s+|was\s+)?[\$]?(\d+\.?\d*)\s*(billion|million)/i);
+  if (incomeMatch) {
+    metrics.netIncome = `$${incomeMatch[1]}${incomeMatch[2][0].toUpperCase()}`;
+  }
+
+  // Extract EPS
+  const epsMatch = content.match(/(?:earnings|eps)\s+per\s+share[s]?\s+(?:of\s+|was\s+)?[\$]?(\d+\.?\d*)/i);
+  if (epsMatch) {
+    metrics.eps = `$${epsMatch[1]}`;
+  }
+
+  // Extract gross margin
+  const marginMatch = content.match(/gross\s+margin[s]?\s+(?:of\s+|was\s+)?(\d+\.?\d*)%/i);
+  if (marginMatch) {
+    metrics.grossMargin = `${marginMatch[1]}%`;
+  }
+
+  return metrics;
+};
+
+/**
+ * Analyze sentiment of the transcript
+ */
+const analyzeSentiment = (content) => {
+  const positiveWords = ['strong', 'growth', 'increase', 'positive', 'exceed', 'success', 'improved', 'momentum', 'optimistic', 'record'];
+  const negativeWords = ['decline', 'decrease', 'weak', 'challenge', 'difficult', 'concern', 'loss', 'lower', 'negative'];
+
+  let positiveCount = 0;
+  let negativeCount = 0;
+
+  positiveWords.forEach((word) => {
+    const regex = new RegExp(word, 'gi');
+    const matches = content.match(regex);
+    if (matches) positiveCount += matches.length;
+  });
+
+  negativeWords.forEach((word) => {
+    const regex = new RegExp(word, 'gi');
+    const matches = content.match(regex);
+    if (matches) negativeCount += matches.length;
+  });
+
+  const ratio = positiveCount / (negativeCount || 1);
+
+  if (ratio > 1.5) return 'Very Positive';
+  if (ratio > 1.0) return 'Positive';
+  if (ratio > 0.7) return 'Neutral to Positive';
+  if (ratio > 0.5) return 'Neutral';
+  return 'Mixed';
+};
+
+/**
+ * Extract management outlook
+ */
+const extractManagementOutlook = (content) => {
+  // Look for forward-looking statements
+  const outlookKeywords = ['outlook', 'expect', 'anticipate', 'forward', 'future', 'guidance', 'next quarter'];
+
+  for (const keyword of outlookKeywords) {
+    const keywordIndex = content.indexOf(keyword);
+    if (keywordIndex !== -1) {
+      // Extract a sentence around this keyword
+      const start = Math.max(0, keywordIndex - 100);
+      const end = Math.min(content.length, keywordIndex + 200);
+      let excerpt = content.substring(start, end);
+
+      // Find sentence boundaries
+      const sentenceStart = excerpt.lastIndexOf('.', 100);
+      const sentenceEnd = excerpt.indexOf('.', 100);
+
+      if (sentenceStart !== -1 && sentenceEnd !== -1) {
+        excerpt = excerpt.substring(sentenceStart + 1, sentenceEnd).trim();
+        if (excerpt.length > 50) {
+          return excerpt.charAt(0).toUpperCase() + excerpt.slice(1) + '.';
+        }
+      }
+    }
+  }
+
+  return 'Management expressed confidence in the company\'s strategic direction and expects continued execution on key initiatives in upcoming quarters.';
+};
+
+/**
+ * Extract Q&A highlights
+ */
+const extractQAHighlights = (content) => {
+  const highlights = [];
+
+  // Check for Q&A section
+  const qaIndex = content.indexOf('question');
+
+  if (qaIndex !== -1) {
+    // Look for common Q&A topics
+    if (content.includes('competition') || content.includes('competitive')) {
+      highlights.push('Addressed questions about competitive landscape and market positioning');
+    }
+    if (content.includes('margin') || content.includes('profitability')) {
+      highlights.push('Discussed margin trends and profitability outlook');
+    }
+    if (content.includes('capital allocation') || content.includes('buyback')) {
+      highlights.push('Provided insights on capital allocation strategy');
+    }
+  }
+
+  // Default Q&A highlights
+  if (highlights.length === 0) {
+    highlights.push('Responded to analyst questions on financial performance');
+    highlights.push('Discussed strategic priorities and market opportunities');
+    highlights.push('Provided color on key business drivers and trends');
+  }
+
+  return highlights.slice(0, 5);
 };
 
 export default api;
