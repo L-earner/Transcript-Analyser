@@ -10,14 +10,15 @@ A modern, beautiful React-based web application for analyzing earnings call tran
 
 - **Multi-Symbol Selection**: Choose up to 5 companies from a curated list of popular stocks
 - **Real-time API Integration**: Fetches latest earnings call transcripts from Financial Modeling Prep API
-- **Smart Analysis**: Automatically analyzes transcripts to extract:
-  - Key financial highlights
+- **AI-Powered Analysis** ⚡ NEW: Uses OpenRouter AI models (GPT-4o-mini) to intelligently extract:
+  - Key financial highlights with specific numbers and context
   - Revenue, net income, EPS, and gross margin metrics
-  - Sentiment analysis (Positive, Neutral, Negative)
+  - Accurate sentiment analysis based on call tone
   - Management outlook and forward guidance
-  - Q&A session highlights
+  - Q&A session highlights and key topics
+- **Intelligent Fallback**: Automatically falls back to regex-based extraction if AI is unavailable
 - **Beautiful UI**: Modern, responsive design with gradient cards and smooth animations
-- **Secure API Key Management**: Environment-based configuration keeps your API key safe
+- **Secure API Key Management**: Environment-based configuration keeps your API keys safe
 - **Error Handling**: Robust error handling with user-friendly messages
 
 ## Tech Stack
@@ -25,6 +26,8 @@ A modern, beautiful React-based web application for analyzing earnings call tran
 - **React 18** - UI framework with hooks
 - **Vite** - Lightning-fast build tool and dev server
 - **Axios** - HTTP client for API calls
+- **OpenAI SDK** - AI integration via OpenRouter
+- **OpenRouter AI** - Access to GPT-4o-mini for intelligent transcript analysis
 - **Financial Modeling Prep API** - Real earnings call transcript data
 - **CSS3** - Modern styling with gradients, animations, and responsive design
 
@@ -34,6 +37,7 @@ A modern, beautiful React-based web application for analyzing earnings call tran
 
 - Node.js 16+ and npm
 - Financial Modeling Prep API key (get one free at [financialmodelingprep.com](https://financialmodelingprep.com/developer/docs/))
+- OpenRouter API key (optional but recommended - get one at [openrouter.ai](https://openrouter.ai/))
 
 ### Installation
 
@@ -48,18 +52,29 @@ cd Transcript-Analyser
 npm install
 ```
 
-3. **Configure your API key** (IMPORTANT):
+3. **Configure your API keys** (IMPORTANT):
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and add your Financial Modeling Prep API key:
+Edit `.env` and add your API keys:
 ```
-VITE_FMP_API_KEY=your_actual_api_key_here
+# Required: Financial Modeling Prep API
+VITE_FMP_API_KEY=your_fmp_api_key_here
 VITE_FMP_API_BASE_URL=https://financialmodelingprep.com/api/v3
+
+# Optional but recommended: OpenRouter AI for better analysis
+VITE_OPENROUTER_API_KEY=your_openrouter_api_key_here
+VITE_OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+VITE_AI_MODEL=openai/gpt-4o-mini
 ```
 
 ⚠️ **Security Note**: Never commit your `.env` file! It's already in `.gitignore` to prevent accidental commits.
+
+**About AI Analysis:**
+- If you provide an OpenRouter API key, the app will use AI (GPT-4o-mini) for much better, context-aware analysis
+- If no OpenRouter key is provided, it automatically falls back to regex-based extraction
+- AI analysis provides significantly more accurate and detailed insights
 
 4. Start the development server:
 ```bash

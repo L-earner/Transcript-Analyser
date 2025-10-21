@@ -1,8 +1,14 @@
 import axios from 'axios';
+import OpenAI from 'openai';
 
 // Get API credentials from environment variables
 const API_KEY = import.meta.env.VITE_FMP_API_KEY;
 const API_BASE_URL = import.meta.env.VITE_FMP_API_BASE_URL || 'https://financialmodelingprep.com/api/v3';
+
+// OpenRouter AI configuration
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
+const OPENROUTER_BASE_URL = import.meta.env.VITE_OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
+const AI_MODEL = import.meta.env.VITE_AI_MODEL || 'openai/gpt-4o-mini';
 
 // Validate API key is present
 if (!API_KEY) {
@@ -13,6 +19,19 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
 });
+
+// Initialize OpenAI client for OpenRouter (if API key is available)
+let aiClient = null;
+if (OPENROUTER_API_KEY) {
+  aiClient = new OpenAI({
+    baseURL: OPENROUTER_BASE_URL,
+    apiKey: OPENROUTER_API_KEY,
+    dangerouslyAllowBrowser: true, // Required for client-side usage
+  });
+  console.log('AI-powered analysis enabled with model:', AI_MODEL);
+} else {
+  console.log('AI-powered analysis disabled. Using regex-based analysis.');
+}
 
 /**
  * Popular stock symbols for user selection
@@ -99,17 +118,87 @@ export const getMultipleTranscripts = async (symbols) => {
 };
 
 /**
- * Analyze transcript content using AI-like keyword extraction
+ * Analyze transcript using AI (OpenRouter)
+ * @param {Object} transcript - Transcript object
+ * @returns {Promise<Object>} Analysis results from AI
+ */
+const analyzeTranscriptWithAI = async (transcript) => {
+  if (!aiClient) {
+    throw new Error('AI client not initialized');
+  }
+
+  console.log(`Using AI to analyze transcript for ${transcript.symbol}...`);
+
+  // Truncate transcript if too long (keep first 15000 chars to stay within token limits)
+  const truncatedContent = transcript.content.substring(0, 15000);
+
+  const prompt = `Analyze the following earnings call transcript and extract key information in JSON format.
+
+Company: ${getCompanyName(transcript.symbol)} (${transcript.symbol})
+Quarter: Q${transcript.quarter} ${transcript.year}
+Date: ${transcript.date}
+
+Transcript:
+${truncatedContent}
+
+Please provide a detailed analysis in the following JSON format:
+{
+  "keyHighlights": [
+    "5 most important highlights from the call (be specific and include numbers where mentioned)"
+  ],
+  "financialMetrics": {
+    "revenue": "Revenue figure with unit (e.g., $94.5B) or N/A if not mentioned",
+    "netIncome": "Net income figure with unit (e.g., $22.3B) or N/A if not mentioned",
+    "eps": "Earnings per share (e.g., $1.46) or N/A if not mentioned",
+    "grossMargin": "Gross margin percentage (e.g., 46.2%) or N/A if not mentioned"
+  },
+  "sentiment": "Overall sentiment: Very Positive, Positive, Neutral to Positive, Neutral, Neutral to Negative, or Mixed",
+  "managementOutlook": "1-2 sentence summary of management's forward-looking statements and guidance",
+  "questionsHighlights": [
+    "3-5 key topics or questions discussed in the Q&A section"
+  ]
+}
+
+Return ONLY the JSON object, no additional text.`;
+
+  try {
+    const completion = await aiClient.chat.completions.create({
+      model: AI_MODEL,
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.3, // Lower temperature for more factual responses
+    });
+
+    const aiResponse = completion.choices[0].message.content;
+    console.log('AI analysis response received');
+
+    // Parse the JSON response
+    const cleanedResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
+    const analysis = JSON.parse(cleanedResponse);
+
+    console.log('AI analysis parsed successfully:', {
+      highlights: analysis.keyHighlights?.length,
+      sentiment: analysis.sentiment
+    });
+
+    return analysis;
+  } catch (error) {
+    console.error('Error in AI analysis:', error);
+    throw error;
+  }
+};
+
+/**
+ * Analyze transcript content using regex extraction (fallback method)
  * @param {Object} transcript - Transcript object
  * @returns {Object} Analysis results
  */
-export const analyzeTranscript = (transcript) => {
-  if (!transcript || !transcript.content) {
-    console.warn('No transcript content to analyze');
-    return null;
-  }
-
-  console.log(`Analyzing transcript for ${transcript.symbol}...`);
+const analyzeTranscriptWithRegex = (transcript) => {
+  console.log(`Using regex to analyze transcript for ${transcript.symbol}...`);
 
   const content = transcript.content.toLowerCase();
   const originalContent = transcript.content;
@@ -131,13 +220,59 @@ export const analyzeTranscript = (transcript) => {
     },
   };
 
-  console.log(`Analysis complete for ${transcript.symbol}:`, {
+  console.log(`Regex analysis complete for ${transcript.symbol}:`, {
     highlights: analysis.summary.keyHighlights.length,
     metrics: analysis.summary.financialMetrics,
     sentiment: analysis.summary.sentiment
   });
 
   return analysis;
+};
+
+/**
+ * Main analyze function - uses AI if available, falls back to regex
+ * @param {Object} transcript - Transcript object
+ * @returns {Promise<Object>} Analysis results
+ */
+export const analyzeTranscript = async (transcript) => {
+  if (!transcript || !transcript.content) {
+    console.warn('No transcript content to analyze');
+    return null;
+  }
+
+  console.log(`Analyzing transcript for ${transcript.symbol}...`);
+
+  // Try AI analysis first if available
+  if (aiClient) {
+    try {
+      const aiAnalysis = await analyzeTranscriptWithAI(transcript);
+
+      // Format the response to match our expected structure
+      const analysis = {
+        id: `${transcript.symbol}-${transcript.quarter}-${transcript.year}`,
+        company: getCompanyName(transcript.symbol),
+        ticker: transcript.symbol,
+        quarter: `Q${transcript.quarter} ${transcript.year}`,
+        date: transcript.date,
+        title: `${getCompanyName(transcript.symbol)} Q${transcript.quarter} ${transcript.year} Earnings Call`,
+        summary: aiAnalysis,
+      };
+
+      console.log(`AI analysis complete for ${transcript.symbol}:`, {
+        highlights: analysis.summary.keyHighlights?.length,
+        metrics: analysis.summary.financialMetrics,
+        sentiment: analysis.summary.sentiment
+      });
+
+      return analysis;
+    } catch (error) {
+      console.warn('AI analysis failed, falling back to regex:', error.message);
+      // Fall through to regex analysis
+    }
+  }
+
+  // Use regex analysis as fallback
+  return analyzeTranscriptWithRegex(transcript);
 };
 
 /**

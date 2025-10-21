@@ -26,10 +26,9 @@ function App() {
         return;
       }
 
-      // Analyze each transcript
-      const analyzed = transcripts
-        .map((transcript) => analyzeTranscript(transcript))
-        .filter((result) => result !== null);
+      // Analyze each transcript (with AI or regex)
+      const analysisPromises = transcripts.map((transcript) => analyzeTranscript(transcript));
+      const analyzed = (await Promise.all(analysisPromises)).filter((result) => result !== null);
 
       if (analyzed.length === 0) {
         setError('Unable to analyze the transcripts. Please try again.');
