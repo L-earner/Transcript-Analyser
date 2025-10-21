@@ -129,10 +129,10 @@ const analyzeTranscriptWithAI = async (transcript) => {
 
   console.log(`Using AI to analyze transcript for ${transcript.symbol}...`);
 
-  // Truncate transcript if too long (keep first 15000 chars to stay within token limits)
-  const truncatedContent = transcript.content.substring(0, 15000);
+  // Truncate transcript if too long (keep first 20000 chars for more comprehensive analysis)
+  const truncatedContent = transcript.content.substring(0, 20000);
 
-  const prompt = `Analyze the following earnings call transcript and extract key information in JSON format.
+  const prompt = `You are a professional equity research analyst conducting a detailed analysis of an earnings call transcript. Provide institutional-grade insights for portfolio managers and analysts.
 
 Company: ${getCompanyName(transcript.symbol)} (${transcript.symbol})
 Quarter: Q${transcript.quarter} ${transcript.year}
@@ -141,25 +141,83 @@ Date: ${transcript.date}
 Transcript:
 ${truncatedContent}
 
-Please provide a detailed analysis in the following JSON format:
+Provide a comprehensive professional analysis in JSON format with the following structure:
+
 {
-  "keyHighlights": [
-    "5 most important highlights from the call (be specific and include numbers where mentioned)"
-  ],
-  "financialMetrics": {
-    "revenue": "Revenue figure with unit (e.g., $94.5B) or N/A if not mentioned",
-    "netIncome": "Net income figure with unit (e.g., $22.3B) or N/A if not mentioned",
-    "eps": "Earnings per share (e.g., $1.46) or N/A if not mentioned",
-    "grossMargin": "Gross margin percentage (e.g., 46.2%) or N/A if not mentioned"
+  "executiveSummary": "2-3 sentence high-level summary of the quarter's performance and key takeaways",
+
+  "financialPerformance": {
+    "revenue": "Revenue with YoY/QoQ growth % (e.g., $94.5B, +6% YoY)",
+    "revenueAnalysis": "Detailed analysis of revenue drivers, segment performance, geographic mix",
+    "netIncome": "Net income with YoY/QoQ change",
+    "eps": "EPS (diluted) with comparison to guidance/estimates",
+    "margins": {
+      "gross": "Gross margin % with direction and drivers",
+      "operating": "Operating margin % with analysis",
+      "net": "Net margin % if mentioned"
+    },
+    "marginAnalysis": "Detailed margin trend analysis, expansion/compression drivers, pricing power",
+    "cashFlow": "Free cash flow, operating cash flow details if discussed",
+    "balanceSheet": "Key balance sheet items: cash position, debt levels, share buybacks, dividends"
   },
-  "sentiment": "Overall sentiment: Very Positive, Positive, Neutral to Positive, Neutral, Neutral to Negative, or Mixed",
-  "managementOutlook": "1-2 sentence summary of management's forward-looking statements and guidance",
-  "questionsHighlights": [
-    "3-5 key topics or questions discussed in the Q&A section"
-  ]
+
+  "operationalHighlights": {
+    "businessSegments": [
+      "Segment-by-segment performance with growth rates and commentary"
+    ],
+    "productPerformance": "Key product lines, new launches, adoption rates",
+    "geographicPerformance": "Regional breakdown and trends",
+    "keyMetrics": "Important operating metrics (DAU, MAU, ARPU, subscribers, units, etc.)"
+  },
+
+  "strategicInitiatives": [
+    "Major strategic moves, M&A, partnerships, new markets, R&D focus, transformation efforts"
+  ],
+
+  "competitivePosition": {
+    "marketShare": "Market share trends and competitive dynamics",
+    "competitiveAdvantages": "Discussed moats, differentiation, pricing power",
+    "threats": "Competitive threats or market share losses mentioned"
+  },
+
+  "riskFactors": [
+    "Key risks, concerns, headwinds, challenges discussed by management or raised in Q&A"
+  ],
+
+  "guidanceAndOutlook": {
+    "nextQuarter": "Specific guidance for next quarter if provided",
+    "fullYear": "Full year guidance updates",
+    "longTerm": "Long-term targets, framework, strategic goals",
+    "assumptions": "Key assumptions underlying guidance (macro, demand, supply chain, etc.)"
+  },
+
+  "managementTone": {
+    "sentiment": "Very Positive/Positive/Neutral/Cautious/Concerned",
+    "confidence": "Assessment of management confidence level",
+    "transparency": "Quality of disclosure and transparency"
+  },
+
+  "qnaInsights": {
+    "analystConcerns": [
+      "Top 3-5 concerns raised by analysts with management responses"
+    ],
+    "keyQuestions": [
+      "Most important questions and answers that reveal strategic direction"
+    ],
+    "unaddressed": "Important topics that were dodged or not adequately addressed"
+  },
+
+  "investmentImplications": {
+    "keyTakeaways": [
+      "3-5 most important insights for investment decisions"
+    ],
+    "catalysts": "Upcoming catalysts or events to watch",
+    "concerns": "Key concerns for the investment thesis",
+    "valuation": "Any comments on valuation, multiples, or stock price"
+  }
 }
 
-Return ONLY the JSON object, no additional text.`;
+Be specific, quantitative, and actionable. Include actual numbers, percentages, and comparisons. Focus on what professional investors need to know. Return ONLY the JSON object.`;
 
   try {
     const completion = await aiClient.chat.completions.create({

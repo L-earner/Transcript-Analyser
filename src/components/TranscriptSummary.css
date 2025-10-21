@@ -259,3 +259,314 @@
     font-size: 1.5rem;
   }
 }
+
+/* Professional Analysis Styles */
+.transcript-summary.professional {
+  max-width: 1200px;
+}
+
+.executive-summary {
+  background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
+  border-left: 4px solid #4f46e5;
+}
+
+.executive-text {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #1f2937;
+  margin: 0;
+}
+
+/* Financial Section Enhancements */
+.financial-section .metrics-grid {
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 2rem;
+}
+
+.metric-card.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+}
+
+.metric-card.primary .metric-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.metric-card.primary .metric-value {
+  color: white;
+}
+
+.analysis-block,
+.margins-block {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
+}
+
+.analysis-block h4,
+.margins-block h4,
+.subsection h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.05rem;
+  color: #4f46e5;
+  font-weight: 700;
+}
+
+.analysis-block p,
+.margins-block p {
+  margin: 0;
+  color: #374151;
+  line-height: 1.7;
+}
+
+.margin-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.margin-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 6px;
+}
+
+.margin-label {
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.margin-value {
+  font-weight: 700;
+  color: #111827;
+  font-size: 1.1rem;
+}
+
+.margin-analysis {
+  margin-top: 1rem !important;
+}
+
+/* Subsections */
+.subsection {
+  margin-top: 1.5rem;
+}
+
+.subsection:first-child {
+  margin-top: 0;
+}
+
+.subsection p {
+  margin: 0.5rem 0 0 0;
+  color: #374151;
+  line-height: 1.7;
+}
+
+.subsection.risk {
+  background: #fef2f2;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 3px solid #ef4444;
+}
+
+.subsection.caution {
+  background: #fef3c7;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 3px solid #f59e0b;
+}
+
+/* Lists */
+.segment-list,
+.strategy-list,
+.risk-list,
+.concern-list,
+.question-list,
+.takeaway-list {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.segment-list li,
+.strategy-list li,
+.risk-list li,
+.concern-list li,
+.question-list li,
+.takeaway-list li {
+  color: #374151;
+  line-height: 1.7;
+  padding-left: 0.5rem;
+}
+
+.strategy-list li::marker {
+  color: #10b981;
+  font-weight: bold;
+}
+
+.risk-list li::marker {
+  color: #ef4444;
+  font-weight: bold;
+}
+
+.takeaway-list li::marker {
+  color: #8b5cf6;
+  font-weight: bold;
+}
+
+/* Guidance Grid */
+.guidance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.guidance-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid #10b981;
+}
+
+.guidance-card h4 {
+  margin: 0 0 0.75rem 0;
+  color: #059669;
+  font-size: 1rem;
+}
+
+.guidance-card p {
+  margin: 0;
+  color: #065f46;
+  line-height: 1.6;
+}
+
+/* Tone Section */
+.tone-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.tone-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+}
+
+.tone-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.tone-badge {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sentiment-caution {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+  box-shadow: 0 3px 15px rgba(251, 191, 36, 0.3);
+}
+
+.tone-card p {
+  margin: 0;
+  color: #374151;
+  line-height: 1.6;
+}
+
+/* Investment Section Highlight */
+.investment-section.highlight {
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 2px solid #8b5cf6;
+  box-shadow: 0 5px 20px rgba(139, 92, 246, 0.15);
+}
+
+.investment-section .section-title {
+  color: #6d28d9;
+}
+
+.investment-section .section-title::before {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+/* Operations & Strategy Sections */
+.operations-section {
+  border-left: 4px solid #10b981;
+}
+
+.strategy-section {
+  border-left: 4px solid #3b82f6;
+}
+
+.competitive-section {
+  border-left: 4px solid #f59e0b;
+}
+
+.risk-section {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-left: 4px solid #ef4444;
+}
+
+.guidance-section {
+  border-left: 4px solid #10b981;
+}
+
+.qna-section {
+  border-left: 4px solid #8b5cf6;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+  .transcript-summary.professional {
+    max-width: 100%;
+  }
+
+  .financial-section .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .guidance-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .financial-section .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tone-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .margin-item {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .analysis-block,
+  .margins-block {
+    padding: 1rem;
+  }
+
+  .subsection h4 {
+    font-size: 1rem;
+  }
+}
