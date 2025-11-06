@@ -290,7 +290,3 @@ For issues and questions:
 
 - Data provided by [Financial Modeling Prep](https://financialmodelingprep.com/)
 - Built with [React](https://react.dev/) and [Vite](https://vitejs.dev/)
-
----
-
-Built with React + Vite | Powered by Financial Modeling Prep API

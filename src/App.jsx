@@ -136,9 +136,6 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>
-          Powered by Financial Modeling Prep API | Built with React and Vite
-        </p>
       </footer>
     </div>
   );
