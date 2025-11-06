@@ -60,6 +60,11 @@ export const POPULAR_SYMBOLS = [
  * @returns {Promise<Array>} Array of transcripts
  */
 export const getEarningsCallTranscript = async (symbol) => {
+  // Check if API key is configured
+  if (!API_KEY || API_KEY === 'your_api_key_here') {
+    throw new Error('Financial Modeling Prep API key is not configured. Please set VITE_FMP_API_KEY in your .env file. Get a free API key at: https://financialmodelingprep.com/developer/docs/');
+  }
+
   try {
     const response = await api.get(`/earning_call_transcript/${symbol}`, {
       params: { apikey: API_KEY },
@@ -71,7 +76,10 @@ export const getEarningsCallTranscript = async (symbol) => {
   } catch (error) {
     console.error(`Error fetching transcript for ${symbol}:`, error);
     if (error.response?.status === 401) {
-      throw new Error('Invalid API key. Please check your VITE_FMP_API_KEY');
+      throw new Error('Invalid API key. Please check your VITE_FMP_API_KEY in .env file');
+    }
+    if (error.response?.status === 403) {
+      throw new Error('API key does not have access to this endpoint. Please verify your Financial Modeling Prep subscription plan');
     }
     throw error;
   }
